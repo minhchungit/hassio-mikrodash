@@ -1,0 +1,641 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   dashboard-grid.css  —  MikroDash configurable 24×22 grid layout system
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Dashboard page: strip padding, fill viewport exactly ────────────────── */
+#page-dashboard {
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* ── Grid root ───────────────────────────────────────────────────────────── */
+#dash-grid-root {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  grid-template-rows: repeat(22, minmax(40px, 1fr));
+  gap: .75rem;      /* matches original .mikrodash-grid gap */
+  padding: 1.25rem; /* matches original .page-view padding */
+  width: 100%;
+  min-height: 100%;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ── Edit mode: tint + grid-line overlay ─────────────────────────────────── */
+#dash-grid-root.dashboard--editing {
+  background: rgb(from var(--accent-rx) r g b / .02);
+}
+
+#dash-grid-root.dashboard--editing::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(var(--grid-cell-w, 100px) - 1px),
+      rgba(255, 255, 255, 0.12) calc(var(--grid-cell-w, 100px) - 1px),
+      rgba(255, 255, 255, 0.12) var(--grid-cell-w, 100px)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--grid-cell-h, 100px) - 1px),
+      rgba(255, 255, 255, 0.12) calc(var(--grid-cell-h, 100px) - 1px),
+      rgba(255, 255, 255, 0.12) var(--grid-cell-h, 100px)
+    );
+  background-position: var(--grid-pad-x, 1.25rem) var(--grid-pad-y, 1.25rem);
+}
+
+/* ── Dash card (grid-cell wrapper) ──────────────────────────────────────── */
+.dash-card {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  container-type: size;
+}
+
+/* Inner .card fills the cell */
+.dash-card > .card {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0;
+  border-radius: 10px;
+}
+
+.dash-card > .card > .card-body {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Traffic card: chart fills the card body */
+#card-traffic .card-body {
+  display: flex;
+  flex-direction: column;
+}
+#card-traffic .chart-wrap {
+  flex: 1;
+  height: auto !important;
+  min-height: 40px;
+  position: relative;
+}
+
+/* Ping card: the chart fills the card body, exactly as the Traffic card above.
+   `.ping-canvas-wrap` is 40px tall in app.css, which is the whole card at its
+   default height - so without this the card grew and the chart did not, and the
+   extra height an operator dragged out became dead space under the bars. */
+#dc-card-ping #ndPingSection {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+#dc-card-ping .ping-canvas-wrap {
+  flex: 1;
+  height: auto !important;
+  min-height: 40px;
+}
+
+
+/* ── Edit mode card border ───────────────────────────────────────────────── */
+.dashboard--editing .dash-card {
+  border: 1px dashed var(--accent-rx) !important;
+  box-shadow: 0 0 0 1px rgb(from var(--accent-rx) r g b / .3) !important;
+}
+
+/* ── Drag handle ────────────────────────────────────────────────────────── */
+.dash-drag-handle {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.4);
+  cursor: grab;
+  z-index: 20;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px 10px 0 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.dashboard--editing .dash-drag-handle {
+  display: flex;
+}
+.dash-drag-handle:active {
+  cursor: grabbing;
+}
+.dash-drag-handle svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.45);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+/* ── Resize handles (8 per card) ────────────────────────────────────────── */
+.dash-resize {
+  position: absolute;
+  z-index: 21;
+  display: none;
+  touch-action: none;
+}
+.dashboard--editing .dash-resize {
+  display: block;
+}
+.dash-resize::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 0.15s;
+}
+.dashboard--editing .dash-card:hover .dash-resize::after {
+  background: rgb(from var(--accent-rx) r g b / .45);
+}
+.dash-resize:hover::after,
+.dash-resize:active::after {
+  background: rgb(from var(--accent-rx) r g b / .8) !important;
+}
+
+.dash-resize.n  { top: 0;      left: 10px;  right: 10px; height: 8px; cursor: ns-resize;   }
+.dash-resize.s  { bottom: 0;   left: 10px;  right: 10px; height: 8px; cursor: ns-resize;   }
+.dash-resize.e  { right: 0;    top: 10px;   bottom: 10px; width: 8px; cursor: ew-resize;   }
+.dash-resize.w  { left: 0;     top: 10px;   bottom: 10px; width: 8px; cursor: ew-resize;   }
+.dash-resize.ne { top: 0;      right: 0;    width: 14px; height: 14px; cursor: nesw-resize; }
+.dash-resize.nw { top: 0;      left: 0;     width: 14px; height: 14px; cursor: nwse-resize; }
+.dash-resize.se { bottom: 0;   right: 0;    width: 14px; height: 14px; cursor: nwse-resize; }
+.dash-resize.sw { bottom: 0;   left: 0;     width: 14px; height: 14px; cursor: nesw-resize; }
+
+/* ── Remove (✕) button ───────────────────────────────────────────────────── */
+.dash-remove-btn {
+  display: none;
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  z-index: 23;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgb(from var(--accent-err) r g b / .3);
+  background: rgb(from var(--accent-err) r g b / .12);
+  color: rgb(from var(--accent-err) r g b / .85);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.12s, color 0.12s;
+  font-family: var(--font-mono);
+}
+.dashboard--editing .dash-remove-btn {
+  display: flex;
+}
+.dash-remove-btn:hover {
+  background: rgb(from var(--accent-err) r g b / .3);
+  color: var(--accent-err);
+}
+
+/* ── Swap-pending: 1.5 s hover countdown highlight ──────────────────────── */
+@keyframes dash-swap-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgb(from var(--accent-rx) r g b / .7); }
+  50%      { box-shadow: 0 0 0 5px rgb(from var(--accent-rx) r g b / .2), 0 0 18px 4px rgb(from var(--accent-rx) r g b / .12); }
+}
+.dashboard--editing .dash-card.dash-swap-pending {
+  animation: dash-swap-pulse 0.65s ease-in-out infinite;
+  border-color: var(--accent-rx) !important;
+  border-style: solid !important;
+}
+
+/* ── Drag placeholder ────────────────────────────────────────────────────── */
+#dash-placeholder {
+  position: absolute;
+  background: rgb(from var(--accent-rx) r g b / .1);
+  border: 1.5px dashed rgb(from var(--accent-rx) r g b / .5);
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 5;
+  display: none;
+  box-sizing: border-box;
+}
+
+/* ── Drag ghost ──────────────────────────────────────────────────────────── */
+#dash-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9990;
+  opacity: 0.6;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px dashed var(--accent-rx);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(from var(--text-muted) r g b / .55);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* ── Edit Dashboard button (topbar) ──────────────────────────────────────── */
+/* An action button (.sbtn, outline, compact); hidden until the dashboard shows it. */
+#dashEditBtn {
+  display: none;
+}
+#dashEditBtn svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* ── Edit mode controls (Save / Discard / Add Card) ──────────────────────── */
+#dashEditControls {
+  align-items: center;
+  gap: 0.4rem;
+  display: none;
+}
+
+#dashEditControls .sbtn {
+  flex-shrink: 0;
+}
+.dash-ctrl-add svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+/* ── Add Card panel ──────────────────────────────────────────────────────── */
+.dash-add-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+#dashAddPanel {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 600;
+  background: rgb(from var(--bg-card) r g b / .97);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem 0.55rem;
+  min-width: 190px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  display: none;
+}
+html[data-theme="light"] #dashAddPanel {
+  background: rgb(from var(--bg-card) r g b / .97);
+}
+#dashAddPanel.open {
+  display: block;
+}
+
+.dash-add-header {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgb(from var(--border) r g b / .55);
+  margin-bottom: 0.5rem;
+}
+.dash-add-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.dash-add-empty {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 0.3rem 0 0.2rem;
+}
+.dash-reset-link {
+  display: block;
+  margin-top: 0.55rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: rgb(from var(--border) r g b / .5);
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.12s;
+}
+.dash-reset-link:hover {
+  color: var(--text-muted);
+}
+
+/* ── Extra dashboard cards (dc-*) ───────────────────────────────────────── */
+
+/* API Diagnostics — the menu list scrolls inside the card.
+   `.dash-card` clips at `overflow:hidden`, and this card's content is variable:
+   eleven subscribed menus on a live router, more on a busy one. Without this the
+   list is cut off mid-row with no scrollbar and no tell — the operator reads a
+   shorter list and has no way to know it. Same failure the payload's `more`
+   field exists to prevent, one layer down. */
+/* ── AGENT OVERVIEW: A TERMINAL ───────────────────────────────────────────
+   Black in both themes on purpose: it is a terminal, not a themed surface.
+   The text colour is the operator's (`aiOverviewTextColor`), set inline on
+   #dc-agentTerm by the renderer; this is the default, MikroDash blue. Prompt,
+   text and cursor inherit it, and the glow follows it via currentColor.
+   The box fills the card body above the meta line, and scrolls rather than
+   clipping if a model ignores the one-line instruction. */
+#dc-card-agent .card-body {
+  display: flex;
+  flex-direction: column;
+}
+#dc-card-agent .agent-term {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #000;
+  color: var(--accent-rx);
+  /* An edge barely lighter than the black, as #1c2733 was: the palette's
+     border mixed into black. --border at full alpha drew a bright frame. */
+  border: 1px solid color-mix(in srgb, var(--border) 20%, #000);
+  border-radius: 6px;
+  padding: .55rem .7rem;
+  font-family: var(--font-mono);
+  font-size: .76rem;
+  line-height: 1.5;
+  text-shadow: 0 0 4px color-mix(in srgb, currentColor 35%, transparent);
+}
+#dc-card-agent .agent-prompt { opacity: .75; }
+/* BLINKS EVEN UNDER prefers-reduced-motion. The operator asked for a flashing
+   cursor, and a reduced-motion exemption stopped it on any system with
+   animation effects switched off, which reads as the change not having shipped.
+   A 1Hz on/off cursor is a terminal convention rather than motion across the
+   screen. `step-end` gives a hard on/off rather than a fade. */
+#dc-card-agent .agent-cursor { animation: agent-blink 1.06s step-end infinite; }
+/* Held solid while a line is being typed, as a real terminal's cursor is. */
+#dc-card-agent .agent-cursor.is-typing { animation: none; opacity: 1; }
+@keyframes agent-blink { 50% { opacity: 0; } }
+
+:is(#dc-card-agent, #dc-card-secscore) .agent-refresh:disabled { cursor: default; opacity: .8; }
+:is(#dc-card-agent, #dc-card-secscore) .agent-refresh.is-busy svg { animation: agent-spin .8s linear infinite; }
+@keyframes agent-spin { to { transform: rotate(360deg); } }
+
+/* The Security Score card: the Security Scan page's ring (app.css, sec-*) at
+   card size, with the grade, issues by severity and the report's age beside it.
+   Stacks when the card is narrow. */
+#dc-card-secscore .dc-sec-body {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  padding: .75rem 1rem; height: 100%; overflow: hidden;
+}
+#dc-card-secscore .dc-sec-score { flex: 0 0 auto; width: min(132px, 42%); min-width: 96px; background: none; }
+#dc-card-secscore .dc-sec-score .sec-ring-wrap { width: 100%; }
+#dc-card-secscore .dc-sec-score .sec-score-num { font-size: 1.7rem; }
+#dc-card-secscore .dc-sec-side { flex: 1 1 140px; min-width: 0; display: flex; flex-direction: column; gap: .5rem; }
+#dc-card-secscore .dc-sec-label { font-weight: 700; font-size: .92rem; color: var(--text-main); }
+#dc-card-secscore .dc-sec-score.grade-good ~ .dc-sec-side .dc-sec-label { color: var(--accent-ok); }
+#dc-card-secscore .dc-sec-score.grade-fair ~ .dc-sec-side .dc-sec-label { color: var(--accent-warn); }
+#dc-card-secscore .dc-sec-score.grade-poor ~ .dc-sec-side .dc-sec-label { color: var(--accent-err); }
+#dc-card-secscore .dc-sec-sevs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem; }
+#dc-card-secscore .dc-sec-sev {
+  display: flex; flex-direction: column; align-items: center; padding: .3rem .2rem;
+  border-radius: 6px; border: 1px solid var(--border); background: rgb(from var(--border) r g b / .05);
+}
+#dc-card-secscore .dc-sec-sev b { font-family: var(--font-mono); font-size: 1rem; line-height: 1.1; color: var(--text-muted); }
+#dc-card-secscore .dc-sec-sev span { font-size: .58rem; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
+#dc-card-secscore .dc-sec-sev.is-on.sev-critical { border-color: rgb(from var(--accent-err) r g b / .45); background: rgb(from var(--accent-err) r g b / .1); }
+#dc-card-secscore .dc-sec-sev.is-on.sev-critical b { color: var(--accent-err); }
+#dc-card-secscore .dc-sec-sev.is-on.sev-high { border-color: rgb(from var(--accent-warn) r g b / .45); background: rgb(from var(--accent-warn) r g b / .1); }
+#dc-card-secscore .dc-sec-sev.is-on.sev-high b { color: rgb(from var(--accent-warn) r g b / .95); }
+#dc-card-secscore .dc-sec-sev.is-on.sev-medium { border-color: rgb(from var(--accent-warn) r g b / .45); background: rgb(from var(--accent-warn) r g b / .1); }
+#dc-card-secscore .dc-sec-sev.is-on.sev-medium b { color: var(--accent-warn); }
+#dc-card-secscore .dc-sec-sev.is-on.sev-low { border-color: rgb(from var(--accent-rx) r g b / .4); background: rgb(from var(--accent-rx) r g b / .08); }
+#dc-card-secscore .dc-sec-sev.is-on.sev-low b { color: var(--accent-rx); }
+#dc-card-secscore .dc-sec-meta { font-size: .68rem; color: var(--text-muted); }
+#dc-card-secscore .dc-sec-meta.is-bad { color: var(--accent-err); }
+#dc-card-secscore .dc-sec-progress { height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; display: none; }
+#dc-card-secscore .dc-sec-progress.is-on { display: block; }
+#dc-card-secscore .dc-sec-progress-bar { height: 100%; width: 0; background: var(--accent-rx); transition: width .3s; }
+#dc-card-secscore .dc-sec-open { font-size: .72rem; align-self: flex-start; margin-left: 0; }
+
+#dc-card-diagnostics .card-body {
+  display: flex;
+  flex-direction: column;
+}
+#dc-diagList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Logs panel — same styling as #logs on Logs page but height auto */
+#dc-logs {
+  background: rgb(from var(--bg-deep) r g b / .85);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  height: 100%;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: rgb(from var(--text-main) r g b / 1);
+  padding: 10px 12px;
+  border-radius: 6px;
+  line-height: 1.6;
+}
+html[data-theme="light"] #dc-logs {
+  background: rgb(from var(--bg-card) r g b / .9);
+  color: rgb(from var(--text-main) r g b / 1);
+}
+#dc-logs::-webkit-scrollbar { width: 4px; }
+#dc-logs::-webkit-scrollbar-thumb { background: rgb(from var(--border) r g b / .2); border-radius: 2px; }
+
+/* ── Bandwidth dashboard card — vertical utilisation bars ───────────────── */
+.dc-bw-body {
+  display: flex;
+  flex-direction: column;
+  padding: .75rem !important;
+}
+.dc-bw-bars {
+  display: flex;
+  gap: .75rem;
+  flex: 1;
+  min-height: 0;
+}
+.dc-bw-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: .2rem;
+  min-height: 0;
+}
+.dc-bw-label {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  /* NEVER WRAPPED. "DOWNLOAD" broke onto a second line in a narrow card, and
+     because the label is `flex-shrink: 0` that second line came straight out of
+     the track's height - the bars squashed to their 40px minimum and the card
+     read as broken. It abbreviates instead, below. */
+  white-space: nowrap;
+  overflow: hidden;
+}
+.dc-bw-label .dc-bw-short { display: none; }
+.dc-bw-label-rx { color: var(--accent-rx); }
+.dc-bw-label-tx { color: var(--accent-tx); }
+.dc-bw-pct {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.dc-bw-track {
+  flex: 1;
+  width: 100%;
+  min-height: 40px;
+  background: rgb(from var(--border) r g b / .12);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.dc-bw-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  border-radius: 6px;
+  transition: height .8s ease;
+}
+.dc-bw-fill-rx {
+  background: linear-gradient(to top, rgb(from var(--accent-rx) r g b / .9), rgb(from var(--accent-rx) r g b / .3));
+}
+.dc-bw-fill-tx {
+  background: linear-gradient(to top, rgb(from var(--accent-tx) r g b / .9), rgb(from var(--accent-tx) r g b / .3));
+}
+.dc-bw-rate {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  color: var(--text-main);
+  text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dc-bw-rate-unit {
+  font-size: .65rem;
+  color: var(--text-muted);
+}
+
+/* Routes donut — constrain canvas inside rt-proto-inner */
+#dc-rtDonutCanvas {
+  display: block;
+}
+
+/* BGP stat wrap — ensure it fills card-body height */
+.dash-card .rt-bgp-stats-wrap {
+  min-height: 80px;
+}
+
+/* ── Container queries: narrow cards hide secondary text ─────────────────── */
+
+/* The Bandwidth card says UP and DOWN once the words no longer fit.
+   168px IS MEASURED, not chosen: the full labels need 70px per column, and two
+   columns plus the .75rem gap and the body's .75rem padding is 164px of card.
+   Rounded up, so a card wide enough for the words always shows them. On a 24
+   column grid that is four columns on any ordinary window - three is where it
+   used to wrap. `container-type: size` on `.dash-card` is what this measures. */
+@container (max-width: 168px) {
+  .dc-bw-label .dc-bw-long { display: none; }
+  .dc-bw-label .dc-bw-short { display: inline; }
+}
+
+@container (max-width: 260px) {
+  .conn-stat-lbl,
+  .chart-legend .legend-item > span:first-of-type {
+    display: none;
+  }
+}
+
+/* ── Mobile: single-column stacked layout ────────────────────────────────── */
+/* Domain Routing (Settings -> Features) */
+.dc-dr-body{display:flex;flex-direction:column;gap:.45rem;overflow:auto}
+.dc-dr-row{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.2rem 0;
+  border-bottom:1px solid var(--border)}
+
+@media (max-width: 767px) {
+  #page-dashboard {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+
+  #dash-grid-root {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+    height: auto !important;
+  }
+
+  .dash-card {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+    height: auto !important;
+    container-type: normal !important; /* disable size containment so height can be intrinsic */
+  }
+
+  /* Switch card from flex column to block — eliminates flex:1 collapse chain */
+  .dash-card > .card {
+    height: auto !important;
+    display: block !important;
+  }
+
+  .dash-card > .card > .card-body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Traffic chart needs an explicit height — Chart.js requires a sized container */
+  #card-traffic .chart-wrap {
+    height: 200px !important;
+  }
+
+  /* Hide edit controls — drag/resize unusable on small screens */
+  #dashEditBtn,
+  #dashEditControls {
+    display: none !important;
+  }
+
+  /* Logs: uncap height on mobile so all entries are visible */
+  #dc-logs {
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+}
