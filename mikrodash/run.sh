@@ -13,6 +13,7 @@ DP=$(gv dash_password)
 
 /usr/local/bin/mikrodash -listen=:3082 -data=/data -web=/app/web/dist -static=/app/web/public -history -backup-scheduler -retention -alert-dispatch 2>&1 | tee /data/app.log &
 APP=$!
+export MKD_USER="$DU" MKD_PASS="$DP"
 /proxy &
 
 i=0; while [ $i -lt 90 ]; do wget -qO- http://127.0.0.1:3082/healthz >/dev/null 2>&1 && break; sleep 1; i=$((i+1)); done
