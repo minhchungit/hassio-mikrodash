@@ -1,12 +1,12 @@
-ARG BUILD_FROM=ghcr.io/secops-7/mikrodash:latest
-FROM golang:1-alpine AS builder
-WORKDIR /src
-COPY proxy.go .
-RUN go mod init shim && go build -o /proxy proxy.go
-
+# Self-contained: vendored mikrodash binary + proxy + web assets, no ghcr.io dependency
+ARG BUILD_FROM=alpine:3
 FROM ${BUILD_FROM}
-COPY --from=builder /proxy /proxy
+RUN apk add --no-cache ca-certificates
+COPY vendor/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY vendor/mikrodash /usr/local/bin/mikrodash
+COPY vendor/proxy /proxy
+COPY vendor/web /app/web
 COPY run.sh /run.sh
-RUN chmod +x /run.sh /proxy
+RUN chmod +x /usr/local/bin/mikrodash /proxy /run.sh
 ENTRYPOINT []
 CMD ["/run.sh"]

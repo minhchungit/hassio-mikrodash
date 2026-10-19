@@ -47,9 +47,14 @@ Tìm **MikroDash** trong store → **Install** → **Start** (bật Start on boo
 ```
 mikrodash/
 ├── config.yaml    — addon manifest (ingress, options schema)
-├── Dockerfile     — build: MikroDash image + proxy shim
-├── proxy.go       — ingress path-rewrite shim (Go)
-└── run.sh         — bootstrap: options → auto setup → router config
+├── Dockerfile     — alpine + vendored binaries, khong phu thuoc ghcr.io
+├── proxy.go       — ingress shim source (tham khao)
+├── run.sh         — bootstrap: options → auto setup → router config
+└── vendor/        — self-contained binaries
+    ├── mikrodash  — MikroDash binary (aarch64)
+    ├── proxy      — ingress shim binary (da compile san)
+    ├── web/       — web UI assets (dist + public)
+    └── ca-certificates.crt
 ```
 
 ## Yêu cầu
