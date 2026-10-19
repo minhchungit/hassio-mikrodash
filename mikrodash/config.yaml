@@ -1,0 +1,33 @@
+name: MikroDash
+version: "1.0.0"
+slug: mikrodash
+description: MikroTik real-time dashboard via HA ingress
+url: https://github.com/SecOps-7/MikroDash
+arch:
+  - aarch64
+  - amd64
+ingress: true
+ingress_port: 3081
+panel_icon: mdi:router-network
+panel_title: MikroDash
+panel_admin: false
+startup: application
+boot: auto
+homeassistant_api: false
+hassio_api: false
+options:
+  router_host: "192.168.88.1"
+  router_port: 8728
+  router_tls: false
+  router_username: "admin"
+  router_password: ""
+  dash_username: "admin"
+  dash_password: ""
+schema:
+  router_host: str
+  router_port: port
+  router_tls: bool
+  router_username: str
+  router_password: str?
+  dash_username: str?
+  dash_password: str?
